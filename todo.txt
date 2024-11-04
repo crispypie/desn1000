@@ -1,4 +1,4 @@
-1. Write camera code/figure out how to connect it
-2. Adjust ultrasonic sensor code to work with front/back sensor
-3. Consider generating a map from sensor data
-4. Consider the user interface via which the user will visualise the data
+1. Write camera code/figure out how to connect it (ESP32-CAM) - Andrew
+2. Adjust ultrasonic sensor code to work with front/left/right sensor - Andrew
+3. Consider generating a map from sensor data - Lachlan
+4. Consider the user interface via which the user will visualise the data - Lachlan
