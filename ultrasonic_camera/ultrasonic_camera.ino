@@ -35,8 +35,8 @@ Ultrasonic ultrasonicLeft(TRIG, ECHO_B);
 Ultrasonic ultrasonicRight(TRIG, ECHO_C);
 
 // Motor instance
-L298N motorA(EN_A, IN1_A, IN1_B);
-L298N motorB(EN_B, IN1_B, IN2_B);
+L298N motorA(EN_RIGHT, IN1_RIGHT, IN2_RIGHT);
+L298N motorB(EN_LEFT, IN1_LEFT, IN2_LEFT);
 
 // Servo instance
 Servo servoA;
