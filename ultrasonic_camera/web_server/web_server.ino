@@ -36,8 +36,8 @@
 // ===========================
 // Enter your WiFi credentials
 // ===========================
-const char *ssid = "**********";
-const char *password = "**********";
+const char *ssid = "Epico";
+const char *password = "testingfirst";
 
 void startCameraServer();
 void setupLedFlash(int pin);

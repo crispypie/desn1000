@@ -3,55 +3,54 @@
 #include <Ultrasonic.h>
 #include <L298N.h>
 
-// Ultrasonic pins
-const unsigned int TRIG = 2;
-const unsigned int ECHO_A = 3; // Echo of Front Ultrasonic
-const unsigned int ECHO_B = 4; // Echo of Left Ultrasonic
-const unsigned int ECHO_C = 10; // Echo of Right Ultrasonic
+// Ultrasonic sensor pins
+const unsigned int TRIG_FRONT = 2; // Orange
+const unsigned int TRIG_BACK = 4; // Purple
+const unsigned int ECHO_FRONT = 3; // Yellow
+const unsigned int ECHO_BACK = 5; // Grey
 
 // Motor A pins
-const unsigned int IN1_A = 7;
-const unsigned int IN2_A = 8;
-const unsigned int EN_A = 9;
+const unsigned int IN1_RIGHT = 8; // Orange
+const unsigned int IN2_RIGHT = 9; // Red
+const unsigned int EN_RIGHT = 10; // Black, extra
 int motorSpeedA = 0;
 
 // Motor B pins
-const unsigned int IN1_B = 12;
-const unsigned int IN2_B = 13;
-const unsigned int EN_B = 11;
+const unsigned int IN1_LEFT = 12; // Brown 
+const unsigned int IN2_LEFT = 13; // Black
+const unsigned int EN_LEFT = 11; // Brown, extra
 int motorSpeedB = 0;
 
 // Servo A pin
-const unsigned int SER_A = 5;
+const unsigned int SER_A = 6;
 int servoAngleA = 90;
 
 // Servo B pin
-const unsigned int SER_B = 6;
+const unsigned int SER_B = 7;
 int servoAngleB = 90;
 
-// Ultrasonic instance
-Ultrasonic ultrasonicFront(TRIG, ECHO_A);
-Ultrasonic ultrasonicLeft(TRIG, ECHO_B);
-Ultrasonic ultrasonicRight(TRIG, ECHO_C);
+// Ultrasonic instances
+Ultrasonic ultrasonicFront(TRIG_FRONT, ECHO_FRONT);
+Ultrasonic ultrasonicBack(TRIG_BACK, ECHO_BACK);
 
-// Motor instance
-L298N motorA(EN_RIGHT, IN1_RIGHT, IN2_RIGHT);
-L298N motorB(EN_LEFT, IN1_LEFT, IN2_LEFT);
+// Motor instances
+L298N motorA(EN_RIGHT, IN1_RIGHT, IN2_RIGHT);  // Fixed L298N motor initialization
+L298N motorB(EN_LEFT, IN1_LEFT, IN2_LEFT);    // Fixed L298N motor initialization
 
-// Servo instance
+// Servo instances
 Servo servoA;
 Servo servoB;
 
 // Function prototypes
-void printSensorData();
 void servoInit();
 void motorInit();
 String getJoystickData();
-void changeServoAngle(int spaceIndex, String input);
+void printSensorData();
+void changeServoAngle(String input);
 void changeMotors(int spaceIndex, String input);
 
 void setup() {
-  Serial.begin(9600); //////////////////////////////////// Not sure which baud rate to use //////////////////////////////////////
+  Serial.begin(9600); 
   while (!Serial) {} // Wait of serial to be ready
   Serial.println("Serial Ready");
 
@@ -62,29 +61,16 @@ void setup() {
 }
 
 void loop() {
-  if (Serial.available()) {
-    String input = getJoystickData();
-    int spaceIndex = input.indexOf(' '); // Find the index of space character
+  if (Serial.available() > 0) {
+    String input = Serial.readString();
 
-    changeServoAngle(spaceIndex, input); ///////////////////////////////// How does exactly the motor driver and servos interact /////////////////////////////////
-
-  } else {
-    Serial.println("Invalid input. Please enter two numbers separated by a space.");
+    if (isAlpha(input[0])) {
+      changeServoAngle(input);
+    } else {
+      int spaceIndex = input.indexOf(' ');
+      changeMotors(input, spaceIndex);
+    }
   }
-
-  // Print the sensor data
-  printSensorData();
-}
-
-// Print the data from the sensors
-void printSensorData() {
-  Serial.print("Front: ");
-  Serial.println(ultrasonicFront.read(CM));
-  Serial.print("Left: ");
-  Serial.println(ultrasonicLeft.read(CM));
-  Serial.print("Right: ");
-  Serial.println(ultrasonicRight.read(CM));
-  delay(10);
 }
 
 // Initialize the servos
@@ -111,36 +97,33 @@ String getJoystickData() {
   return input;
 }
 
-void changeServoAngle(int spaceIndex, String input) {
-  // Check if valid input, we are assuming only 2 numbers are given
-  if (spaceIndex > 0) {
-    String part1 = input.substring(0, spaceIndex); // Extract the first part
-    String part2 = input.substring(spaceIndex + 1); // Extract the second part
+// Print the data from the sensors
+void printSensorData() {
+  Serial.print("Front: ");
+  Serial.println(ultrasonicFront.read(CM));
+  Serial.print("Back: ");
+  Serial.println(ultrasonicBack.read(CM));
+  delay(1000);
+}
 
-    // Check if both parts are non-empty before converting to integers
-    if (part1.length() > 0 && part2.length() > 0) {
-      servoAngleA = part1.toInt(); // Convert the first part to an integer
-      servoAngleB = part2.toInt(); // Convert the second part to an integer
-
-      // Output the two angles
-      Serial.print("Servo 1 Angle: ");
-      Serial.println(servoAngleA);
-      Serial.print("Servo 2 Angle: ");
-      Serial.println(servoAngleB);
-
-      // Change the angles
-      servoA.write(servoAngleA); 
-      servoB.write(servoAngleB);
-    } else {
-      Serial.println("Invalid input. Both numbers must be provided.");
-    }
-  } else {
-    Serial.println("Invalid input. Please enter two numbers separated by a space.");
+void changeServoAngle(String input) {
+  if (input == "U") {
+    servoAngleA += servoAngle >= 180 ? 0 : 10;
+    servoA.write(servoAngleA);
+  } else if (input == "D") {
+    servoAngleA -= servoAngle <= 0 ? 0 : 10;
+    servoA.write(servoAngleA);
+  } else if (input == "R") {
+    servoAngleB += servoAngle >= 180 ? 0 : 10;
+    servoB.write(servoAngleB);
+  } else if (input == "L") {
+    servoAngleB -= servoAngle <= 0 ? 0 : 10;
+    servoB.write(servoAngleB);
   }
 }
 
 // Change the motors speed and direction
-void changeMotors(int spaceIndex, String input) {
+void changeMotors(String input, int spaceIndex) {
   int motorDirectionA = 0;
   int motorDirectionB = 0;
 
@@ -156,24 +139,48 @@ void changeMotors(int spaceIndex, String input) {
       motorSpeedA = (motorDirectionA / 180) * 255;
       motorSpeedB = (motorDirectionB / 180) * 255;
 
-      // Change the direction of the motors
-      motorA.setSpeed(motorSpeedA);
+      // Change motor A
       if (motorDirectionA == 90) {
-        motorA.stop();
-      } else if (motorDirectionA < 90) {
-        motorA.backward();
+          motorSpeedA = 0;
+          motorA.setSpeed(motorA);
+          motorA.stop();
+          Serial.println("Stops");
       } else if (motorDirectionA > 90) {
-        motorA.forward();
+          motorA.setSpeed(motorSpeedA);
+          motorA.forward();
+          Serial.println("Going forwards");
+      } else if (motorDirectionA < 90) {
+          motorA.setSpeed(motorSpeedA);
+          motorA.backward();
+          Serial.println("Going backwards");
+      } else {
+        Serial.println("Invalid Number for input");
       }
 
-      motorB.setSpeed(motorSpeedB);
-      if (motorDirectionB == 90) { 
-        motorA.stop();
-      } else if (motorDirectionB < 90) {
-        motorA.forward();
+      // Change motor B
+      if (motorDirectionB == 90) {
+          motorSpeedB = 0;
+          motorB.setSpeed(motorSpeedB);
+          motorB.stop();
+          Serial.println("Stops");
       } else if (motorDirectionB > 90) {
-        motorA.backward();
+          motorB.setSpeed(motorSpeedB);
+          motorB.forward();
+          Serial.println("Going forwards");
+      } else if (motorDirectionB < 90) {
+          motorB.setSpeed(motorSpeedB);
+          motorB.backward();
+          Serial.println("Going backwards");
+      } else {
+        Serial.println("Invalid Number for input");
       }
+
+      // Print the integers
+      Serial.print("First integer: ");
+      Serial.println(motorDirectionA);
+      Serial.print("Second integer: ");
+      Serial.println(motorDirectionB);
+      delay(1000);
 
     } else {
       Serial.println("Invalid input. Both numbers must be provided.");
