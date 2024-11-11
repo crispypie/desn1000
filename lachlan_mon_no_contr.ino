@@ -226,7 +226,7 @@ void stop() {
   motorLeft.setSpeed(motorSpeedLeft);
   motorRight.forward();
   motorLeft.forward();
-  Serial.println("Stopping...");
+  Serial.print("Stopping...");
 }
 
 void help() {
